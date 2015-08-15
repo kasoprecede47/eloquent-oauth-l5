@@ -54,13 +54,20 @@ class EloquentOAuthServiceProvider extends ServiceProvider {
 
     protected function registerOAuthManager()
     {
-        $this->app['adamwathan.oauth'] = $this->app->share(function ($app) {
+        $this->app->singleton('adamwathan.socialnorm',function($app){
             $providerRegistry = new ProviderRegistry;
             $session = new Session($app['session']);
             $request = new Request($app['request']->all());
             $stateGenerator = new StateGenerator;
             $socialnorm = new SocialNorm($providerRegistry, $session, $request, $stateGenerator);
             $this->registerProviders($socialnorm, $request);
+
+            return $socialnorm;
+        });
+
+        $this->app['adamwathan.oauth'] = $this->app->share(function ($app) {
+
+            $socialnorm = $app['adamwathan.socialnorm'];
 
             $users = new UserStore($app['config']['auth.model']);
 
@@ -112,7 +119,7 @@ class EloquentOAuthServiceProvider extends ServiceProvider {
      */
     public function provides()
     {
-        return ['adamwathan.oauth'];
+        return ['adamwathan.oauth','adamwathan.socialnorm'];
     }
 
 }
